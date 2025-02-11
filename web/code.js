@@ -13,7 +13,7 @@ anchor.group.add(plane)
 
 async function startAR () {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
     await mindarThree.start()
     renderer.setAnimationLoop(() => {
       renderer.render(scene, camera)
