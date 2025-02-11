@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { MindARThree } from 'mindar-image-three'
 const mindarThree = new MindARThree({
   container: document.querySelector('#container'),
-  imageTargetSrc: './targets.mind'
+  imageTargetSrc: './web/targets.mind'
 })
 const { renderer, scene, camera } = mindarThree
 const anchor = mindarThree.addAnchor(0)
