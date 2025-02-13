@@ -26,13 +26,43 @@
         top: 0;
         left: 0;
         z-index: 999;
+        display: flex;
+        justify-content: left;
+        flex-direction: column;
+
+        #visual-console {
+          /* This should make text to emulate computer console style font */
+          font-family: monospace;
+          font-size: 12px;
+          color: white;
+          background-color: rgba(0, 0, 0, 0.5);
+          padding: 10px;
+          margin-top: 10px;
+          min-width: 300px;
+          max-height: 300px;
+          overflow-y: auto;
+          overflow-x: auto;
+          scrollbar-width: thin;
+          max-width: 50vw;
+
+          &.hidden {
+            display: none;
+          }
+        }
       }
     </style>
   </head>
   <body>
     <div id="control">
-      <button id="startButton">Start</button>
-      <button id="stopButton">Stop</button>
+      <div>
+        <button id="startButton">Start</button>
+        <button id="stopButton">Stop</button>
+        <button id="toggleVisualConsoleButton">JS Console</button>
+        <button id="clearVisualConsoleButton">Clear Console</button>
+      </div>
+      <div id="visual-console">
+
+      </div>
     </div>
     <div id="container">
     </div>

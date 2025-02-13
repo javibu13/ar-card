@@ -1,5 +1,11 @@
+import setVisualLogActive from './visualLog.js'
 import * as THREE from 'three'
 import { MindARThree } from 'mindar-image-three'
+
+// Activate the visual log
+setVisualLogActive('visual-console')
+
+// Create a MindARThree instance
 const mindarThree = new MindARThree({
   container: document.querySelector('#container'),
   imageTargetSrc: './web/targets.mind',
@@ -18,7 +24,7 @@ const cube = new THREE.Mesh(cubeGeometry, material)
 // anchor.group.add(plane)
 // anchor.group.add(cube)
 
-// Dibujar ejes en escena
+// Draw axes in the anchor
 // // Eje X
 const xAxisGeometry = new THREE.BoxGeometry(1, 0.05, 0.05)
 const xAxisMaterial = new THREE.MeshBasicMaterial({ color: 'red' })
@@ -45,6 +51,11 @@ async function startAR () {
   try {
     // Ask for permission to access the camera
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    navigator.mediaDevices.enumerateDevices().then(devices => {
+      devices.forEach(device => {
+        console.log(device.kind, device.label, device.deviceId)
+      })
+    })
     await mindarThree.start()
     renderer.setAnimationLoop((currentTime) => {
       const deltaTime = currentTime - previousTime
@@ -58,6 +69,7 @@ async function startAR () {
   }
 }
 
+// Start and stop buttons
 const startButton = document.querySelector('#startButton')
 const stopButton = document.querySelector('#stopButton')
 startButton.addEventListener('click', () => {
@@ -67,6 +79,16 @@ stopButton.addEventListener('click', () => {
   mindarThree.stop()
   mindarThree.renderer.setAnimationLoop(null)
 })
-
-// Simultar el click en el botón de inicio
+// Force click on the start button
 startButton.click()
+
+// Visual console for debugging control buttons
+const toggleVisualConsoleButton = document.querySelector('#toggleVisualConsoleButton')
+const clearVisualConsoleButton = document.querySelector('#clearVisualConsoleButton')
+const visualConsole = document.querySelector('#visual-console')
+toggleVisualConsoleButton.addEventListener('click', () => {
+  visualConsole.classList.toggle('hidden')
+})
+clearVisualConsoleButton.addEventListener('click', () => {
+  visualConsole.innerHTML = ''
+})
