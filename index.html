@@ -67,6 +67,10 @@
         font-family: monospace;
         font-size: 12px;
       }
+
+      .hidden {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -74,10 +78,11 @@
       <div>
         <button id="startButton">Start</button>
         <button id="stopButton">Stop</button>
-        <button id="toggleVisualConsoleButton">JS Console</button>
-        <button id="clearVisualConsoleButton">Clear Console</button>
+        <button id="toggleDebugButton">Debug?</button>
+        <button id="toggleVisualConsoleButton" class="debug hidden">JS Console</button>
+        <button id="clearVisualConsoleButton" class="debug hidden">Clear Console</button>
       </div>
-      <div id="visual-console">
+      <div id="visual-console" class="debug hidden">
 
       </div>
     </div>
