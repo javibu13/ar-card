@@ -29,6 +29,7 @@ document.querySelector('#toggleDebugButton').addEventListener('click', (event) =
 const mindarThree = new MindARThree({
   container: document.querySelector('#container'),
   imageTargetSrc: './web/targets.mind',
+  uiScanning: '#custom-scanning-overlay',
   filterMinCF: 0.001,
   filterBeta: 0.05
 })
@@ -59,18 +60,18 @@ const ambientLight = new THREE.AmbientLight(0xffffff, 0.25)
 // Add ambient light to the anchor
 anchor.group.add(ambientLight)
 
-// Load a 3D model
+// Load the rocket 3D model
 const loader = new GLTFLoader()
-loader.load('./web/3d/rocket.glb', (gltf) => {
+loader.load('./web/3d/rocket/rocket.glb', (gltf) => {
   const model = gltf.scene
   model.scale.set(0.25, 0.25, 0.25)
   model.rotation.set(Math.PI / 2, Math.PI, 0) // Rotate the model to be vertical
   model.position.set(0, 0, 0.11)
-  const diffuseMap = textureLoader.load('./web/3d/diffuse_map.png', (texture) => {
+  const diffuseMap = textureLoader.load('./web/3d/rocket/diffuse_map.png', (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace
     texture.flipY = false
   })
-  const normalMap = textureLoader.load('./web/3d/normal_map.png', (texture) => {
+  const normalMap = textureLoader.load('./web/3d/rocket/normal_map.png', (texture) => {
     texture.colorSpace = THREE.NoColorSpace
     texture.flipY = false
   })
@@ -133,6 +134,91 @@ function toggleLightIndicatorsVisibility () {
   }
 }
 
+// Load the button 3D model
+let mixer
+loader.load('./web/3d/buttonInfinite/buttonInfinite.glb', (gltf) => {
+  const model = gltf.scene
+  model.scale.set(0.25, 0.25, 0.25)
+  model.rotation.set(Math.PI / 2, 0, 0) // Rotate the model to be vertical
+  model.position.set(0, 0.1, 0.11)
+  const diffuseMap = textureLoader.load('./web/3d/buttonInfinite/button_diffuse_map.png', (texture) => {
+    texture.colorSpace = THREE.SRGBColorSpace
+    texture.flipY = false
+  })
+  const normalMap = textureLoader.load('./web/3d/buttonInfinite/button_normal_map.png', (texture) => {
+    texture.colorSpace = THREE.NoColorSpace
+    texture.flipY = false
+  })
+  model.traverse((child) => {
+    if (child.isMesh) {
+      child.castShadow = true
+      child.receiveShadow = true
+      child.material = new THREE.MeshStandardMaterial({
+        color: child.material.color,
+        map: diffuseMap,
+        normalMap,
+        normalScale: new THREE.Vector2(1, 1),
+        roughness: 0.8,
+        metalness: 0.2
+      })
+    }
+  })
+  anchor.group.add(model)
+  // Load animations
+  mixer = new THREE.AnimationMixer(model)
+  const clips = gltf.animations
+  // Obtener las animaciones
+  const pressAnim = mixer.clipAction(clips.find(clip => clip.name === 'press'))
+  pressAnim.setLoop(THREE.LoopOnce)
+  pressAnim.clampWhenFinished = true
+  pressAnim.timeScale = 1
+  const releaseAnim = mixer.clipAction(clips.find(clip => clip.name === 'release'))
+  releaseAnim.setLoop(THREE.LoopOnce)
+  releaseAnim.clampWhenFinished = true
+  releaseAnim.timeScale = 1
+
+  // mixer.addEventListener('finished', (event) => {
+  //   if (event.action === pressAnim) {
+  //     pressAnim.stop() // Detener animación anterior
+  //     releaseAnim.reset().play() // Iniciar release
+  //   } else if (event.action === releaseAnim) {
+  //     releaseAnim.stop() // Detener release después de finalizar
+  //   }
+  // })
+
+  // Set up Raycaster to detect clicks
+  const raycaster = new THREE.Raycaster()
+  const mouse = new THREE.Vector2()
+  let isPressed = false
+  // Click event handler
+  function onMouseDown (event) {
+    // Get normalized mouse coordinates
+    const rect = renderer.domElement.getBoundingClientRect()
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+    // Cast the ray from the camera
+    raycaster.setFromCamera(mouse, camera)
+    const intersects = raycaster.intersectObject(model)
+    if (intersects.length > 0) {
+      console.log('¡Botón 3D clickeado!')
+      isPressed = true
+      releaseAnim.stop() // Stop the previous animation
+      pressAnim.reset().play()
+    }
+  }
+  function onMouseUp (event) {
+    if (isPressed) {
+      console.log('¡Botón 3D liberado!')
+      pressAnim.stop() // Stop the previous animation
+      releaseAnim.reset().play()
+      isPressed = false
+    }
+  }
+  // Add the click event listener
+  document.addEventListener('mousedown', onMouseDown)
+  document.addEventListener('mouseup', onMouseUp)
+})
+
 async function startAR () {
   try {
     // Ask for permission to access the camera
@@ -176,7 +262,10 @@ async function startAR () {
         console.error('Error accessing the camera:', error)
       })
     await mindarThree.start()
+    const clock = new THREE.Clock()
     renderer.setAnimationLoop((currentTime) => {
+      const delta = clock.getDelta()
+      if (mixer) mixer.update(delta)
       renderer.render(scene, camera)
     })
   } catch (error) {

@@ -68,6 +68,14 @@
         font-size: 12px;
       }
 
+      #custom-scanning-overlay {
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+
       .hidden {
         display: none;
       }
@@ -88,6 +96,14 @@
     </div>
     <a id="repo-link" href="https://github.com/javibu13/ar-card" target="_blank">View on GitHub</a>
     <div id="container">
+    </div>
+    <div id="custom-scanning-overlay" class="mindar-ui-overlay mindar-ui-scanning hidden">
+      <div class="scanning">
+        <div class="inner">
+          <img src="./web/3d/scannerTextureWB.png" alt="scannerTexture"/>
+          <div class="scanline">
+        </div>
+      </div>
     </div>
   </body>
 </html>
