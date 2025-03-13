@@ -75,6 +75,7 @@ const loader = new GLTFLoader()
 let rocket3D
 let mixerRocket3D
 let rocketAnims = {}
+let rocketReadyToTakeOff = false
 let smoke3D
 let mixerSmoke3D
 let smokeAnim
@@ -126,6 +127,13 @@ loader.load('./web/3d/rocket/rocket.glb', (gltf) => {
   }
   // Play the start animation
   rocketAnims.hidden.reset().play()
+  // On animation end, set the rocket ready to take off
+  mixerRocket3D.addEventListener('finished', (event) => {
+    if (event.action === rocketAnims.show) {
+      rocketReadyToTakeOff = true
+      rocketAnims.show.crossFadeTo(rocketAnims.takeOff, 0.5, true)
+    }
+  })
 
   // Load the smoke 3D model
   loader.load('./web/3d/smoke/smoke.glb', (gltf) => {
@@ -133,10 +141,19 @@ loader.load('./web/3d/rocket/rocket.glb', (gltf) => {
     smoke3D.scale.set(0.25, 0.25, 0.25)
     smoke3D.rotation.set(Math.PI / 2, 0, 0) // Rotate the smoke3D to be vertical
     smoke3D.position.set(0, 0, 0.11)
+    const smokeMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.75,
+      depthWrite: true,
+      depthTest: true
+    })
     smoke3D.traverse((child) => {
       if (child.isMesh) {
         child.castShadow = true
         child.receiveShadow = true
+        child.material = smokeMaterial
+        child.renderOrder = 3 // Render the smoke after the plane
       }
     })
     anchor.group.add(smoke3D)
@@ -148,7 +165,6 @@ loader.load('./web/3d/rocket/rocket.glb', (gltf) => {
     smokeAnim.setLoop(THREE.LoopRepeat)
     smokeAnim.clampWhenFinished = false
     smokeAnim.timeScale = 1
-    smokeAnim.reset().play()
   })
 })
 
@@ -331,9 +347,10 @@ loader.load('./web/3d/buttonInfinite/buttonInfinite.glb', (gltf) => {
       console.log('¡Botón 3D liberado!')
       pressAnim.stop() // Stop the previous animation
       releaseAnim.reset().play()
-      if (hatchOpened && rocketAnims.show.isRunning()) {
-        rocketAnims.show.crossFadeTo(rocketAnims.takeOff, 0.5, true)
+      if (hatchOpened && rocketReadyToTakeOff) {
+        // rocketAnims.show.crossFadeTo(rocketAnims.takeOff, 0.5, true)
         rocketAnims.takeOff.reset().play()
+        smokeAnim.reset().play()
       } else if (!hatchOpened && !hatchOpenAnim2.isRunning()) {
         hatchOpenAnim1.stop() // Stop the previous animation
         hatchOpenAnim2.stop() // Stop the previous animation
@@ -398,7 +415,7 @@ async function startAR () {
       if (mixerButton3D) mixerButton3D.update(delta)
       if (mixerHatch3D) mixerHatch3D.update(delta)
       if (mixerSmoke3D) mixerSmoke3D.update(delta)
-      if (smoke3D) smoke3D.position.copy(rocket3D.children[0].position)
+      if (smoke3D) smoke3D.position.set(smoke3D.position.x, smoke3D.position.y, rocket3D.children[0].position.y * 0.25)
       renderer.render(scene, camera)
     })
   } catch (error) {
