@@ -46,7 +46,9 @@ const groundMaterial = new THREE.MeshStandardMaterial({
   alphaTest: 0.5,
   side: THREE.FrontSide,
   metalness: 0,
-  roughness: 1
+  roughness: 1,
+  depthWrite: true,
+  depthTest: true
 })
 const plane = new THREE.Mesh(planeGeometry, groundMaterial)
 plane.receiveShadow = true
@@ -59,9 +61,10 @@ const clippingPlane = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), new THREE.Me
   depthTest: true, // Allows the object to hide other objects behind it
   depthWrite: true // Writes to the depth buffer
 }))
-clippingPlane.position.set(0, 0, -0.01)
-clippingPlane.rotation.set(0, 0, 0)
+clippingPlane.position.set(0, 0, -0.0025)
 anchor.group.add(clippingPlane)
+clippingPlane.renderOrder = 0 // Render the clipping first
+plane.renderOrder = 1 // Render the ground plane after the clipping plane
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.25)
 // Add ambient light to the anchor
@@ -69,11 +72,18 @@ anchor.group.add(ambientLight)
 
 // Load the rocket 3D model
 const loader = new GLTFLoader()
+let rocket3D
+let mixerRocket3D
+let rocketAnims = {}
+let smoke3D
+let mixerSmoke3D
+let smokeAnim
 loader.load('./web/3d/rocket/rocket.glb', (gltf) => {
-  const model = gltf.scene
-  model.scale.set(0.25, 0.25, 0.25)
-  model.rotation.set(Math.PI / 2, Math.PI, 0) // Rotate the model to be vertical
-  model.position.set(0, 0, 0.11)
+  rocket3D = gltf.scene
+  rocket3D.scale.set(0.25, 0.25, 0.25)
+  rocket3D.rotation.set(Math.PI / 2, Math.PI, 0) // Rotate the model to be vertical
+  rocket3D.position.set(0, 0, 0.11)
+  console.log(rocket3D.children[0].position)
   const diffuseMap = textureLoader.load('./web/3d/rocket/diffuse_map.png', (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace
     texture.flipY = false
@@ -82,7 +92,7 @@ loader.load('./web/3d/rocket/rocket.glb', (gltf) => {
     texture.colorSpace = THREE.NoColorSpace
     texture.flipY = false
   })
-  model.traverse((child) => {
+  rocket3D.traverse((child) => {
     if (child.isMesh) {
       child.castShadow = true
       child.receiveShadow = true
@@ -99,7 +109,47 @@ loader.load('./web/3d/rocket/rocket.glb', (gltf) => {
       })
     }
   })
-  anchor.group.add(model)
+  anchor.group.add(rocket3D)
+  // Load animations
+  mixerRocket3D = new THREE.AnimationMixer(rocket3D)
+  const clips = gltf.animations
+  // Get animations
+  rocketAnims = {
+    hidden: mixerRocket3D.clipAction(clips.find(clip => clip.name === 'hidden')),
+    show: mixerRocket3D.clipAction(clips.find(clip => clip.name === 'show')),
+    takeOff: mixerRocket3D.clipAction(clips.find(clip => clip.name === 'takeOff'))
+  }
+  for (const anim in rocketAnims) {
+    rocketAnims[anim].setLoop(THREE.LoopOnce)
+    rocketAnims[anim].clampWhenFinished = true
+    rocketAnims[anim].timeScale = 1
+  }
+  // Play the start animation
+  rocketAnims.hidden.reset().play()
+
+  // Load the smoke 3D model
+  loader.load('./web/3d/smoke/smoke.glb', (gltf) => {
+    smoke3D = gltf.scene
+    smoke3D.scale.set(0.25, 0.25, 0.25)
+    smoke3D.rotation.set(Math.PI / 2, 0, 0) // Rotate the smoke3D to be vertical
+    smoke3D.position.set(0, 0, 0.11)
+    smoke3D.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true
+        child.receiveShadow = true
+      }
+    })
+    anchor.group.add(smoke3D)
+    // Load animations
+    mixerSmoke3D = new THREE.AnimationMixer(smoke3D)
+    const clips = gltf.animations
+    // Get animations
+    smokeAnim = mixerSmoke3D.clipAction(clips.find(clip => clip.name === 'Animation'))
+    smokeAnim.setLoop(THREE.LoopRepeat)
+    smokeAnim.clampWhenFinished = false
+    smokeAnim.timeScale = 1
+    smokeAnim.reset().play()
+  })
 })
 
 // Add lights to the scene
@@ -146,6 +196,9 @@ function toggleLightIndicatorsVisibility () {
 
 // Load the hatch 3D model
 let mixerHatch3D
+let hatchOpenAnim1
+let hatchOpenAnim2
+let hatchOpened = false
 loader.load('./web/3d/hatch/hatch.glb', (gltf) => {
   const model = gltf.scene
   model.scale.set(0.25, 0.25, 0.25)
@@ -163,7 +216,6 @@ loader.load('./web/3d/hatch/hatch.glb', (gltf) => {
     texture.colorSpace = THREE.NoColorSpace
     texture.flipY = false
   })
-  console.log(model)
   model.traverse((child) => {
     if (child.isMesh) {
       child.castShadow = true
@@ -189,6 +241,26 @@ loader.load('./web/3d/hatch/hatch.glb', (gltf) => {
     }
   })
   anchor.group.add(model)
+  // Load animations
+  mixerHatch3D = new THREE.AnimationMixer(model)
+  const clips = gltf.animations
+  // Get animations
+  hatchOpenAnim1 = mixerHatch3D.clipAction(clips.find(clip => clip.name === 'keyOpen1'))
+  hatchOpenAnim1.setLoop(THREE.LoopOnce)
+  hatchOpenAnim1.clampWhenFinished = true
+  hatchOpenAnim1.timeScale = 1
+  hatchOpenAnim2 = mixerHatch3D.clipAction(clips.find(clip => clip.name === 'keyOpen2'))
+  hatchOpenAnim2.setLoop(THREE.LoopOnce)
+  hatchOpenAnim2.clampWhenFinished = true
+  hatchOpenAnim2.timeScale = 1
+  // On animation end, play the rocket show animation
+  mixerHatch3D.addEventListener('finished', (event) => {
+    if (event.action === hatchOpenAnim2) {
+      hatchOpened = true
+      rocketAnims.hidden.crossFadeTo(rocketAnims.show, 0.5, true)
+      rocketAnims.show.reset().play()
+    }
+  })
 })
 
 // Load the button 3D model
@@ -224,7 +296,7 @@ loader.load('./web/3d/buttonInfinite/buttonInfinite.glb', (gltf) => {
   // Load animations
   mixerButton3D = new THREE.AnimationMixer(model)
   const clips = gltf.animations
-  // Obtener las animaciones
+  // Get animations
   const pressAnim = mixerButton3D.clipAction(clips.find(clip => clip.name === 'press'))
   pressAnim.setLoop(THREE.LoopOnce)
   pressAnim.clampWhenFinished = true
@@ -259,6 +331,15 @@ loader.load('./web/3d/buttonInfinite/buttonInfinite.glb', (gltf) => {
       console.log('¡Botón 3D liberado!')
       pressAnim.stop() // Stop the previous animation
       releaseAnim.reset().play()
+      if (hatchOpened && rocketAnims.show.isRunning()) {
+        rocketAnims.show.crossFadeTo(rocketAnims.takeOff, 0.5, true)
+        rocketAnims.takeOff.reset().play()
+      } else if (!hatchOpened && !hatchOpenAnim2.isRunning()) {
+        hatchOpenAnim1.stop() // Stop the previous animation
+        hatchOpenAnim2.stop() // Stop the previous animation
+        hatchOpenAnim1.reset().play()
+        hatchOpenAnim2.reset().play()
+      }
       isPressed = false
     }
   }
@@ -313,7 +394,11 @@ async function startAR () {
     const clock = new THREE.Clock()
     renderer.setAnimationLoop((currentTime) => {
       const delta = clock.getDelta()
+      if (mixerRocket3D) mixerRocket3D.update(delta)
       if (mixerButton3D) mixerButton3D.update(delta)
+      if (mixerHatch3D) mixerHatch3D.update(delta)
+      if (mixerSmoke3D) mixerSmoke3D.update(delta)
+      if (smoke3D) smoke3D.position.copy(rocket3D.children[0].position)
       renderer.render(scene, camera)
     })
   } catch (error) {
