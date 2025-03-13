@@ -144,7 +144,7 @@ loader.load('./web/3d/rocket/rocket.glb', (gltf) => {
     const smokeMaterial = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.85,
       depthWrite: true,
       depthTest: true
     })
@@ -347,8 +347,7 @@ loader.load('./web/3d/buttonInfinite/buttonInfinite.glb', (gltf) => {
       console.log('¡Botón 3D liberado!')
       pressAnim.stop() // Stop the previous animation
       releaseAnim.reset().play()
-      if (hatchOpened && rocketReadyToTakeOff) {
-        // rocketAnims.show.crossFadeTo(rocketAnims.takeOff, 0.5, true)
+      if (hatchOpened && rocketReadyToTakeOff && !rocketAnims.takeOff.isRunning()) {
         rocketAnims.takeOff.reset().play()
         smokeAnim.reset().play()
       } else if (!hatchOpened && !hatchOpenAnim2.isRunning()) {
@@ -363,6 +362,35 @@ loader.load('./web/3d/buttonInfinite/buttonInfinite.glb', (gltf) => {
   // Add the click event listener
   document.addEventListener('mousedown', onMouseDown)
   document.addEventListener('mouseup', onMouseUp)
+})
+
+document.fonts.ready.then(() => {
+  // Create a canvas element to draw the text
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  canvas.width = 512
+  canvas.height = 512
+  // Text style
+  ctx.fillStyle = 'white'
+  ctx.font = 'bold 256px "Arial Black"'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'alphabetic'
+
+  const today = new Date() // Actual date
+  const objetiveDate = new Date(2025, 5, 7) // 07/06/2025
+  // Calculate the remaining days
+  const timeDiff = objetiveDate - today
+  const daysRemaining = Math.max(0, Math.ceil(timeDiff / (1000 * 60 * 60 * 24)))
+
+  ctx.fillText(daysRemaining, canvas.width / 2, canvas.height / 2 + 40)
+  // Create a texture with the canvas
+  const texture = new THREE.CanvasTexture(canvas)
+  const material = new THREE.MeshStandardMaterial({ map: texture, transparent: true })
+  // Create a plane to display the text
+  const geometry = new THREE.PlaneGeometry(0.42, 0.42)
+  const textPlane = new THREE.Mesh(geometry, material)
+  textPlane.position.set(0, 0, 0.005)
+  anchor.group.add(textPlane)
 })
 
 async function startAR () {

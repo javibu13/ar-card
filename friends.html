@@ -41,7 +41,7 @@
             <img src="https://cdn-icons-png.flaticon.com/512/14274/14274446.png" alt="Formulario de asistencia" title="" class="img-small">
             <p>Formulario de asistencia</p>
           </a>
-          <a onclick="openWorkInProgress(1)" href="#">
+          <a onclick="openInstructions()" href="./">
             <img src="https://cdn-icons-png.flaticon.com/512/6357/6357965.png" alt="Formulario de asistencia" title="" class="img-small">
             <p>Experiencia de Realidad Aumentada</p>
           </a>
@@ -50,6 +50,10 @@
   <script>
     function openWorkInProgress(day) {
       alert(`🚧 ¡Lo sentimos! Esta sección está en construcción.\n¡Vuelve a comprobarlo el ${day} de abril!`)
+    }
+    function openInstructions() {
+      alert(`¡Enfoca con tu cámara 📷 al cohete 🚀 de la invitación para ver la experiencia de realidad aumentada!`)
+      window.open("./", "_self")
     }
   </script>
 </html>

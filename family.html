@@ -32,18 +32,28 @@
   </head>
   <body>
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-          <a target="_blank" href="./">
+          <h1>Boda JaMon</h1>
+          <a target="_blank" href="./web/pdf/boda_JaMon_menu_comida.pdf">
             <img src="https://cdn-icons-png.flaticon.com/512/1046/1046747.png" alt="Menú" title="" class="img-small">
-            <p></p>
+            <p>Menú de la celebración</p>
           </a>
-          <a target="_blank" href="./">
+          <a target="_blank" href="https://docs.google.com/forms/d/e/1FAIpQLScN20Q13zLJcXyeuNfCkNzU-zAypTZpZbq8-jK_a3eFJY_EPQ/viewform?usp=dialog">
             <img src="https://cdn-icons-png.flaticon.com/512/14274/14274446.png" alt="Formulario de asistencia" title="" class="img-small">
             <p>Formulario de asistencia</p>
           </a>
-          <a target="_blank" href="./">
+          <a onclick="openInstructions()" href="./">
             <img src="https://cdn-icons-png.flaticon.com/512/6357/6357965.png" alt="Formulario de asistencia" title="" class="img-small">
             <p>Experiencia de Realidad Aumentada</p>
           </a>
         </div>
   </body>
+  <script>
+    function openWorkInProgress(day) {
+      alert(`🚧 ¡Lo sentimos! Esta sección está en construcción.\n¡Vuelve a comprobarlo el ${day} de abril!`)
+    }
+    function openInstructions() {
+      alert(`¡Enfoca con tu cámara 📷 al cohete 🚀 de la invitación para ver la experiencia de realidad aumentada!`)
+      window.open("./", "_self")
+    }
+  </script>
 </html>
